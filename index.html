@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Employé(e) à domicile — Simulateur de coût</title>
+<meta name="description" content="Simulateur du coût d'un(e) employé(e) à domicile : garde d'enfants ou entretien de la maison, charges URSSAF CESU, crédit d'impôt et compte de provision." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20303A; --paper:#F6F2E9; --paper2:#EFE9DC; --line:#CDC3AC;
+    --gold:#A97C1F; --muted:#7A7261; --dark-line:#3C4D57; --cream:#EDE6D3; --cream2:#C9BE9F;
+    --rust:#8F4430; --green:#3E6653;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);font-family:'Inter',sans-serif;color:var(--ink);}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 20px;}
+  header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+  .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:0.15em;color:var(--gold);font-weight:600;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:28px;margin:4px 0 0 0;}
+  .ref{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);text-align:right;line-height:1.6;}
+  .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:32px;}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+
+  h2.section{font-size:13px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin:28px 0 10px 0;}
+  h2.section:first-child{margin-top:0;}
+
+  .emp-card{border:1px solid var(--line);border-radius:2px;padding:16px;margin-bottom:14px;background:var(--paper2);}
+  .emp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;}
+  .emp-head input.emp-name{flex:1;font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--ink);background:transparent;border:none;border-bottom:1px solid var(--line);padding:3px 2px;}
+  .emp-head input.emp-name:focus{outline:none;border-bottom-color:var(--gold);}
+  .emp-head input.emp-name::placeholder{color:var(--muted);font-weight:400;font-style:italic;}
+  .btn{background:transparent;border:1px solid var(--line);border-radius:3px;padding:4px 10px;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;}
+  .btn:hover{border-color:var(--gold);color:var(--gold);}
+  .btn-add{border-color:var(--gold);color:var(--gold);font-weight:600;padding:7px 14px;}
+
+  .nature-tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;padding:2px 7px;border-radius:2px;margin-bottom:10px;}
+  .nature-garde{background:#DCE6DF;color:var(--green);}
+  .nature-entretien{background:#EDDCD4;color:var(--rust);}
+
+  table.days{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px;}
+  table.days th{text-align:right;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.04em;padding:3px 5px;}
+  table.days th:first-child{text-align:left;}
+  table.days td{padding:3px 5px;border-bottom:1px solid var(--line);}
+  table.days td:first-child{font-weight:500;}
+  table.days input{width:100%;text-align:right;background:transparent;border:1px solid var(--line);border-radius:4px;padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);}
+
+  details.adjust{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;}
+  details.adjust summary{font-size:12px;color:var(--gold);cursor:pointer;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+  details.adjust summary::marker{color:var(--line);}
+  table.adjust-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px;}
+  table.adjust-tbl th{text-align:right;font-weight:600;color:var(--muted);font-size:10.5px;text-transform:uppercase;padding:3px 5px;}
+  table.adjust-tbl th:first-child{text-align:left;}
+  table.adjust-tbl td{padding:3px 5px;border-bottom:1px solid var(--line);text-align:right;font-family:'IBM Plex Mono',monospace;}
+  table.adjust-tbl td:first-child{text-align:left;font-family:'Inter',sans-serif;}
+  table.adjust-tbl input{width:66px;text-align:right;background:transparent;border:1px solid var(--line);border-radius:4px;padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink);}
+  table.adjust-tbl input.overridden{border-color:var(--gold);color:var(--gold);font-weight:600;}
+
+  .field, .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);}
+  .field label, .toggle label{font-size:13.5px;}
+  .field .in{display:flex;align-items:center;gap:6px;}
+  input[type="number"], input[type="date"], input[type="text"], select{
+    background:transparent;border:1px solid var(--line);border-radius:4px;padding:5px 8px;
+    font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--ink);
+  }
+  input[type="number"]{width:78px;text-align:right;}
+  input[type="date"]{width:148px;}
+  .suffix{font-size:12px;color:var(--muted);width:32px;}
+  input[type="checkbox"]{width:16px;height:16px;accent-color:var(--gold);}
+
+  .note{font-size:12px;line-height:1.6;color:var(--muted);margin-top:10px;}
+
+  .card{background:var(--paper2);border:1px solid var(--line);border-radius:2px;padding:20px;margin-bottom:16px;}
+  .card.dark{background:var(--ink);}
+  .card-title{font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:8px;}
+  .card.dark .card-title{color:var(--cream2);}
+
+  .line{display:flex;align-items:baseline;justify-content:space-between;padding:5px 0;font-size:14px;}
+  .line .val{font-family:'IBM Plex Mono',monospace;}
+  .line.bold{font-weight:600;}
+  .line.muted{color:var(--muted);}
+  .line.muted .val{color:var(--muted);}
+  .rule{border-top:1px solid var(--line);margin:8px 0;}
+  .rule.dark{border-top:1px solid var(--dark-line);}
+
+  .card.dark .line{color:var(--cream2);}
+  .card.dark .line .val{color:var(--cream);}
+  .credit-amount{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--cream);}
+  .credit-badge{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold);}
+
+  .month-table-wrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:2px;}
+  table.months{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+  table.months th, table.months td{white-space:nowrap;}
+  table.months col.col-mois{width:22%;}
+  table.months col.col-heures{width:10%;}
+  table.months col.col-net{width:28%;}
+  table.months col.col-charges{width:20%;}
+  table.months col.col-cout{width:20%;}
+  table.months col.col-q{width:25%;}
+  table.months thead th{position:sticky;top:0;background:var(--paper2);text-align:right;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);border-bottom:1px solid var(--line);}
+  table.months thead th:first-child{text-align:left;}
+  table.months td{padding:6px 10px;text-align:right;font-family:'IBM Plex Mono',monospace;border-bottom:1px solid var(--line);}
+  table.months td:first-child{text-align:left;font-family:'Inter',sans-serif;}
+  table.months tfoot td{padding:8px 10px;font-weight:600;border-top:1px solid var(--ink);background:var(--paper2);}
+  td.neg{color:var(--rust);}
+  td.pos{color:var(--green);}
+
+  .emp-summary{border-top:1px solid var(--line);padding-top:10px;margin-top:10px;}
+  .emp-summary-name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold);margin-bottom:3px;}
+  .year-block{margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--line);}
+  .year-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .year-label{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold);margin-bottom:3px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Simulation · Employé(e) à domicile</div>
+      <h1>Bulletin de simulation</h1>
+    </div>
+    <div class="ref">CESU déclaratif · Calendrier 2026/2027<br/>Taux URSSAF au 01/01/2026<br/>
+      <a href="#" onclick="resetState();return false;" style="color:var(--gold);">Réinitialiser les données</a>
+    </div>
+  </header>
+  <p class="note" style="margin:0 0 26px 0;">Vos saisies sont conservées automatiquement dans ce navigateur (stockage local) — rien n'est envoyé ni partagé. Les charges sont calculées séparément pour chaque employé(e) : le plafond de 5 € de Contribution Santé au Travail et l'abattement de 2 €/h s'appliquent donc par contrat.</p>
+
+  <div class="grid">
+    <!-- LEFT: inputs -->
+    <div>
+      <h2 class="section">Employé(e)s</h2>
+      <div id="employeesContainer"></div>
+      <button class="btn btn-add" onclick="addEmployee()">+ Ajouter un(e) employé(e)</button>
+
+      <h2 class="section">Vacances scolaires</h2>
+      <div class="toggle">
+        <label for="applyVacances">Aucune garde pendant les vacances scolaires</label>
+        <input type="checkbox" id="applyVacances" checked>
+      </div>
+      <div class="field">
+        <label for="zoneScolaire">Zone scolaire (hiver / printemps)</label>
+        <select id="zoneScolaire">
+          <option value="A">Zone A</option>
+          <option value="B">Zone B</option>
+          <option value="C" selected>Zone C</option>
+        </select>
+      </div>
+      <p class="note">Ne s'applique qu'aux contrats de <strong>garde d'enfants</strong> : l'entretien de la maison continue pendant les vacances. Toussaint, Noël et grandes vacances sont communes aux 3 zones. Été 2027 estimé jusqu'au 31 août (rentrée 2027 non publiée).</p>
+
+      <h2 class="section">Décaissement</h2>
+      <div class="field">
+        <label for="decalageCharges">Décalage du prélèvement des charges</label>
+        <div class="in"><input type="number" id="decalageCharges" value="2" min="0" max="6" step="1"><span class="suffix">mois</span></div>
+      </div>
+      <p class="note">Le salaire de septembre génère des charges prélevées en novembre. Les tableaux montrent le décaissement réel mois par mois.</p>
+
+      <h2 class="section">Provision</h2>
+      <div class="field">
+        <label for="moisProvGarde">Garde d'enfants — lissée sur</label>
+        <div class="in"><input type="number" id="moisProvGarde" value="10" min="1" max="24" step="1"><span class="suffix">mois</span></div>
+      </div>
+      <div class="field">
+        <label for="moisProvEntretien">Entretien de la maison — lissé sur</label>
+        <div class="in"><input type="number" id="moisProvEntretien" value="12" min="1" max="24" step="1"><span class="suffix">mois</span></div>
+      </div>
+      <p class="note">Pour chaque contrat : provision mensuelle = dépenses prévisionnelles (salaires + charges) ÷ son nombre de mois de lissage. Le montant est constant tout au long de la période de provisionnement de ce contrat, à compter de son premier mois d'activité.</p>
+
+      <h2 class="section">Foyer fiscal</h2>
+      <div class="toggle">
+        <label for="cpInclus">Congés payés déjà inclus dans les taux</label>
+        <input type="checkbox" id="cpInclus" checked>
+      </div>
+      <div class="field">
+        <label for="enfants">Enfants à charge du foyer</label>
+        <div class="in"><input type="number" id="enfants" value="1" min="0" step="1"></div>
+      </div>
+      <div class="toggle">
+        <label for="premiereAnnee">1ère année d'emploi à domicile (+1 500 € de plafond)</label>
+        <input type="checkbox" id="premiereAnnee">
+      </div>
+      <p class="note">
+        Cotisations patronales : barème URSSAF CESU « emplois familiaux » — 44,696 % du brut + 5 € (plafonné à 47,396 % du brut), moins l'abattement forfaitaire de 2 €/heure. Cotisations salariales : 21,88025 % du brut (23,18025 % en Alsace-Moselle). Le crédit d'impôt est plafonné au niveau du foyer, tou(te)s employé(e)s confondu(e)s, par année civile.
+      </p>
+    </div>
+
+    <!-- RIGHT: results -->
+    <div>
+      <div class="card">
+        <div class="card-title">Détail mensuel consolidé</div>
+        <div class="month-table-wrap">
+          <table class="months">
+            <colgroup>
+              <col class="col-mois"><col class="col-heures"><col class="col-net"><col class="col-charges"><col class="col-cout">
+            </colgroup>
+            <thead><tr><th>Mois</th><th>Heures</th><th>Salaire net</th><th id="thCharges">Charges</th><th>Décaissé</th></tr></thead>
+            <tbody id="monthsBody"></tbody>
+            <tfoot><tr><td>Total période</td><td id="totHeures">–</td><td id="totNet">–</td><td id="totCharges">–</td><td id="totCout">–</td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Compte de provision</div>
+        <div class="month-table-wrap" style="max-height:420px;">
+          <table class="months">
+            <colgroup>
+              <col class="col-mois"><col class="col-q"><col class="col-q"><col class="col-q">
+            </colgroup>
+            <thead><tr><th>Mois</th><th>Provision</th><th>Décaissement</th><th>Solde</th></tr></thead>
+            <tbody id="provBody"></tbody>
+            <tfoot><tr><td>Total</td><td id="provTotal">–</td><td id="provSorties">–</td><td id="provSolde">–</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="rule"></div>
+        <div id="provSummary"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Détail mensuel par employé(e)</div>
+        <div id="empMonthTables"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Récapitulatif par employé(e)</div>
+        <div id="empSummaries"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Crédit d'impôt par année civile (foyer)</div>
+        <div id="yearsBlock"></div>
+      </div>
+
+      <div class="card dark">
+        <div class="card-title">Bilan sur la durée des contrats</div>
+        <div class="line" style="align-items:baseline;">
+          <span class="credit-amount" id="outCreditTotal">–</span>
+          <span class="credit-badge">crédit d'impôt cumulé</span>
+        </div>
+        <div class="rule dark"></div>
+        <div class="line"><span>Coût total employeur (avant crédit)</span><span class="val" id="outCoutBrutTotal">–</span></div>
+        <div class="line bold"><span>Coût réel après crédit d'impôt</span><span class="val" id="outCoutReelTotal">–</span></div>
+        <div class="line"><span>Provision mensuelle totale</span><span class="val" id="outProvMensuelle">–</span></div>
+        <div class="line"><span>Coût réel moyen / mois</span><span class="val" id="outCoutReelMoisMoyen">–</span></div>
+        <div class="line"><span>Coût réel / heure travaillée</span><span class="val" id="outCoutHoraire">–</span></div>
+      </div>
+
+      <p class="note">
+        Le crédit d'impôt est en principe versé l'année suivant la dépense (avance de 60 % en janvier). Ordre de grandeur, pas une valeur contractuelle.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Constantes URSSAF CESU (01/01/2026) ----
+  var TAUX_SALARIAL = 0.2188025;
+  var TAUX_SALARIAL_ALSACE_MOSELLE = 0.2318025;
+  var TAUX_PATRONAL_BASE = 0.44696;
+  var TAUX_PATRONAL_MAX = 0.47396;
+  var PLAFOND_SANTE_TRAVAIL = 5;
+  var ABATTEMENT_HORAIRE = 2;
+
+  var FERIES = new Set([
+    '2026-01-01','2026-04-06','2026-05-01','2026-05-08','2026-05-14','2026-05-25',
+    '2026-07-14','2026-08-15','2026-11-01','2026-11-11','2026-12-25',
+    '2027-01-01','2027-03-29','2027-05-01','2027-05-06','2027-05-08','2027-05-17',
+    '2027-07-14','2027-08-15','2027-11-01','2027-11-11','2027-12-25'
+  ]);
+
+  var VACANCES_COMMUNES = [
+    ['2026-07-04','2026-09-01'],
+    ['2026-10-17','2026-11-02'],
+    ['2026-12-19','2027-01-04'],
+    ['2027-07-03','2027-08-31']
+  ];
+  var VACANCES_ZONE = {
+    A: [['2027-02-13','2027-03-01'], ['2027-04-10','2027-04-26']],
+    B: [['2027-02-20','2027-03-08'], ['2027-04-17','2027-05-03']],
+    C: [['2027-02-06','2027-02-22'], ['2027-04-03','2027-04-19']]
+  };
+  function isVacances(iso, zone){
+    var ranges = VACANCES_COMMUNES.concat(VACANCES_ZONE[zone] || []);
+    for (var i=0;i<ranges.length;i++){ if (iso >= ranges[i][0] && iso < ranges[i][1]) return true; }
+    return false;
+  }
+
+  var JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  var MOIS_FR = ['Janv.','Févr.','Mars','Avr.','Mai','Juin','Juil.','Août','Sept.','Oct.','Nov.','Déc.'];
+
+  var NATURES = {
+    garde:      {label:"Garde d'enfants",        court:'Garde',     cls:'nature-garde'},
+    entretien:  {label:'Entretien de la maison', court:'Entretien', cls:'nature-entretien'}
+  };
+
+  function euro(n){
+    if (Math.abs(n) < 0.005) n = 0;   // évite un "-0,00 €" d'arrondi
+    return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+  }
+  function isoDate(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function monLundi0(d){ return (d.getDay()+6)%7; }
+  function shiftMonthKey(key, n){
+    var p = key.split('-');
+    var total = parseInt(p[0],10)*12 + (parseInt(p[1],10)-1) + n;
+    return Math.floor(total/12) + '-' + String(total%12 + 1).padStart(2,'0');
+  }
+  function moisLabel(key){
+    var p = key.split('-');
+    return MOIS_FR[parseInt(p[1],10)-1] + ' ' + p[0];
+  }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  function chargesFromNet(net, heures, tauxSalarial){
+    if (net <= 0) return {brut:0, cotisSalariales:0, patronalDu:0, coutTotal:0};
+    var brut = net / (1 - tauxSalarial);
+    var cotisSalariales = brut - net;
+    var patronalAvant = Math.min(TAUX_PATRONAL_BASE*brut + PLAFOND_SANTE_TRAVAIL, TAUX_PATRONAL_MAX*brut);
+    var patronalDu = Math.max(0, patronalAvant - ABATTEMENT_HORAIRE * heures);
+    return {brut:brut, cotisSalariales:cotisSalariales, patronalDu:patronalDu, coutTotal:brut + patronalDu};
+  }
+
+  // ---- Modèle employé(e)s ----
+  var employees = [];
+  var nextId = 1;
+
+  function newEmployee(opts){
+    opts = opts || {};
+    var nature = opts.nature || 'garde';
+    return {
+      id: nextId++,
+      nom: opts.nom !== undefined ? opts.nom : NATURES[nature].label,
+      nature: nature,
+      dateDebut: opts.dateDebut || '2026-09-01',
+      dateFin: opts.dateFin || '2027-07-02',
+      heuresJour: opts.heuresJour || [3,3,0,3,3,0,0],
+      tauxJour: opts.tauxJour || [14,14,14,14,14,14,14],
+      tauxFerie: 17,
+      travailleFeries: false,
+      alsaceMoselle: false,
+      ajustHeures: {}   // {"2026-09": 65}
+    };
+  }
+
+  function addEmployee(){
+    employees.push(newEmployee({nom:''}));
+    renderEmployees();
+    render();
+  }
+  function removeEmployee(id){
+    employees = employees.filter(function(e){ return e.id !== id; });
+    renderEmployees();
+    render();
+  }
+  function getEmp(id){ return employees.filter(function(x){ return x.id === id; })[0]; }
+
+  function updateEmployee(id, field, value, index){
+    var e = getEmp(id);
+    if (!e) return;
+    if (index === undefined) e[field] = value;
+    else e[field][index] = value;
+    render();
+  }
+  // Champs qui changent la liste des mois -> on reconstruit la carte
+  function updateEmployeeStruct(id, field, value){
+    var e = getEmp(id);
+    if (!e) return;
+    e[field] = value;
+    renderEmployees();
+    render();
+  }
+  function setAjust(id, key, raw){
+    var e = getEmp(id);
+    if (!e) return;
+    if (raw === '' || raw === null) delete e.ajustHeures[key];
+    else e.ajustHeures[key] = parseFloat(raw) || 0;
+    render();
+  }
+
+  // ---- Calcul des heures théoriques mois par mois ----
+  function bucketsFor(e, applyVacances, zoneScolaire){
+    var buckets = {}, order = [];
+    var dStart = new Date(e.dateDebut + 'T00:00:00');
+    var dEnd = new Date(e.dateFin + 'T00:00:00');
+    if (isNaN(dStart) || isNaN(dEnd) || dEnd < dStart) return {buckets:buckets, order:order};
+    var vacancesActives = (e.nature === 'garde') && applyVacances;
+    var cur = new Date(dStart);
+    while (cur <= dEnd) {
+      var iso = isoDate(cur);
+      var dow = monLundi0(cur);
+      var heures = 0, taux = 0;
+      if (FERIES.has(iso)) {
+        if (e.travailleFeries) { heures = e.heuresJour[dow]; taux = e.tauxFerie; }
+      } else if (vacancesActives && isVacances(iso, zoneScolaire)) {
+        heures = 0; taux = 0;
+      } else {
+        heures = e.heuresJour[dow]; taux = e.tauxJour[dow];
+      }
+      var key = iso.slice(0,7);
+      if (!buckets[key]) { buckets[key] = {heures:0, netBase:0}; order.push(key); }
+      buckets[key].heures += heures;
+      buckets[key].netBase += heures * taux;
+      cur.setDate(cur.getDate()+1);
+    }
+    return {buckets:buckets, order:order};
+  }
+
+  // ---- Rendu des cartes employé(e) ----
+  function renderEmployees(){
+    var applyVacances = document.getElementById('applyVacances').checked;
+    var zoneScolaire = document.getElementById('zoneScolaire').value;
+    var c = document.getElementById('employeesContainer');
+    c.innerHTML = '';
+
+    employees.forEach(function(e){
+      var nat = NATURES[e.nature];
+      var card = document.createElement('div');
+      card.className = 'emp-card';
+
+      var rows = JOURS.map(function(j,i){
+        return '<tr><td>'+j+'</td>'
+          + '<td><input type="number" min="0" step="0.25" value="'+e.heuresJour[i]+'" oninput="updateEmployee('+e.id+',\'heuresJour\',parseFloat(this.value)||0,'+i+')"></td>'
+          + '<td><input type="number" min="0" step="0.5" value="'+e.tauxJour[i]+'" oninput="updateEmployee('+e.id+',\'tauxJour\',parseFloat(this.value)||0,'+i+')"></td></tr>';
+      }).join('');
+
+      // Tableau d'ajustement des heures par mois
+      var bk = bucketsFor(e, applyVacances, zoneScolaire);
+      var adjRows = bk.order.map(function(k){
+        var th = bk.buckets[k].heures;
+        var ov = e.ajustHeures[k];
+        var has = ov !== undefined && ov !== null;
+        return '<tr><td>'+moisLabel(k)+'</td><td>'+th.toFixed(1)+' h</td>'
+          + '<td><input type="number" min="0" step="0.5" class="'+(has?'overridden':'')+'" value="'+(has?ov:'')+'" placeholder="'+th.toFixed(1)+'" '
+          + 'oninput="setAjust('+e.id+',\''+k+'\',this.value)"></td></tr>';
+      }).join('');
+
+      card.innerHTML =
+        '<div class="emp-head">'
+        + '<input class="emp-name" placeholder="Nom de l\'employé(e)" value="'+esc(e.nom)+'" oninput="updateEmployee('+e.id+',\'nom\',this.value)">'
+        + (employees.length > 1 ? '<button class="btn" onclick="removeEmployee('+e.id+')">Supprimer</button>' : '')
+        + '</div>'
+        + '<span class="nature-tag '+nat.cls+'">'+nat.label+'</span>'
+        + '<div class="field"><label>Nature de l\'emploi</label>'
+        + '<select onchange="updateEmployeeStruct('+e.id+',\'nature\',this.value)">'
+        + '<option value="garde"'+(e.nature==='garde'?' selected':'')+'>Garde d\'enfants</option>'
+        + '<option value="entretien"'+(e.nature==='entretien'?' selected':'')+'>Entretien de la maison</option>'
+        + '</select></div>'
+        + '<div class="field"><label>Début de contrat</label><input type="date" min="2026-01-01" max="2027-12-31" value="'+e.dateDebut+'" onchange="updateEmployeeStruct('+e.id+',\'dateDebut\',this.value)"></div>'
+        + '<div class="field"><label>Fin de contrat</label><input type="date" min="2026-01-01" max="2027-12-31" value="'+e.dateFin+'" onchange="updateEmployeeStruct('+e.id+',\'dateFin\',this.value)"></div>'
+        + '<table class="days"><thead><tr><th>Jour</th><th>Heures/j</th><th>Taux net €/h</th></tr></thead><tbody>'+rows+'</tbody></table>'
+        + '<div class="toggle"><label>Travaille les jours fériés habituels</label><input type="checkbox" '+(e.travailleFeries?'checked':'')+' onchange="updateEmployee('+e.id+',\'travailleFeries\',this.checked)"></div>'
+        + '<div class="field"><label>Taux net jour férié (si travaillé)</label><div class="in"><input type="number" min="0" step="0.5" value="'+e.tauxFerie+'" oninput="updateEmployee('+e.id+',\'tauxFerie\',parseFloat(this.value)||0)"><span class="suffix">€/h</span></div></div>'
+        + '<div class="toggle"><label>Alsace-Moselle (cotis. salariale +1,30 %)</label><input type="checkbox" '+(e.alsaceMoselle?'checked':'')+' onchange="updateEmployee('+e.id+',\'alsaceMoselle\',this.checked)"></div>'
+        + '<details class="adjust"><summary>Ajuster les heures par mois</summary>'
+        + '<table class="adjust-tbl"><thead><tr><th>Mois</th><th>Calculé</th><th>Ajusté</th></tr></thead><tbody>'+adjRows+'</tbody></table>'
+        + '<p class="note">Laissez vide pour garder le calcul du planning. Une valeur ajustée remplace le total du mois, au taux horaire moyen de ce mois.</p>'
+        + '</details>';
+      c.appendChild(card);
+    });
+  }
+
+  // ---- Persistance ----
+  var STORAGE_KEY = 'simulateur-employe-domicile-v3';
+  function saveState(){
+    var state = {
+      employees: employees,
+      nextId: nextId,
+      applyVacances: document.getElementById('applyVacances').checked,
+      zoneScolaire: document.getElementById('zoneScolaire').value,
+      cpInclus: document.getElementById('cpInclus').checked,
+      enfants: document.getElementById('enfants').value,
+      premiereAnnee: document.getElementById('premiereAnnee').checked,
+      decalageCharges: document.getElementById('decalageCharges').value,
+      moisProvGarde: document.getElementById('moisProvGarde').value,
+      moisProvEntretien: document.getElementById('moisProvEntretien').value
+    };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  }
+  function loadState(){
+    var raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) { return false; }
+    if (!raw) return false;
+    try {
+      var s = JSON.parse(raw);
+      if (!s.employees || !s.employees.length) return false;
+      employees = s.employees.map(function(e){
+        if (!e.nature) e.nature = 'garde';
+        if (!e.ajustHeures) e.ajustHeures = {};
+        delete e.moisProvision;   // le lissage est désormais défini par nature d'emploi
+        return e;
+      });
+      nextId = s.nextId || (employees.length + 1);
+      document.getElementById('applyVacances').checked = !!s.applyVacances;
+      document.getElementById('zoneScolaire').value = s.zoneScolaire || 'C';
+      document.getElementById('cpInclus').checked = !!s.cpInclus;
+      document.getElementById('enfants').value = s.enfants !== undefined ? s.enfants : 1;
+      document.getElementById('premiereAnnee').checked = !!s.premiereAnnee;
+      document.getElementById('decalageCharges').value = s.decalageCharges !== undefined ? s.decalageCharges : 2;
+      document.getElementById('moisProvGarde').value = s.moisProvGarde !== undefined ? s.moisProvGarde : 10;
+      document.getElementById('moisProvEntretien').value = s.moisProvEntretien !== undefined ? s.moisProvEntretien : 12;
+      return true;
+    } catch(e) { return false; }
+  }
+  function resetState(){
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    location.reload();
+  }
+
+  // ---- Calcul + rendu ----
+  function render(){
+    saveState();
+
+    var applyVacances = document.getElementById('applyVacances').checked;
+    var zoneScolaire = document.getElementById('zoneScolaire').value;
+    var cpInclus = document.getElementById('cpInclus').checked;
+    var enfants = parseFloat(document.getElementById('enfants').value) || 0;
+    var premiereAnnee = document.getElementById('premiereAnnee').checked;
+    var decalage = Math.max(0, Math.round(parseFloat(document.getElementById('decalageCharges').value) || 0));
+
+    var consolidated = {};
+    var yearTotals = {};
+    var empResults = [];
+    var provision = {};   // "YYYY-MM" -> {entree, sortie}
+    var nProvGarde = Math.max(1, Math.round(parseFloat(document.getElementById('moisProvGarde').value) || 1));
+    var nProvEntretien = Math.max(1, Math.round(parseFloat(document.getElementById('moisProvEntretien').value) || 1));
+
+    function touch(map, k){
+      if (!map[k]) map[k] = {heures:0, net:0, charges:0, cout:0};
+      return map[k];
+    }
+    function touchProv(k){
+      if (!provision[k]) provision[k] = {entree:0, sortie:0};
+      return provision[k];
+    }
+
+    employees.forEach(function(e){
+      var tauxSalarial = e.alsaceMoselle ? TAUX_SALARIAL_ALSACE_MOSELLE : TAUX_SALARIAL;
+      var bk = bucketsFor(e, applyVacances, zoneScolaire);
+
+      // Taux horaire moyen du contrat (secours si un mois ajusté n'a pas d'heures calculées)
+      var sumH = 0, sumNet = 0;
+      bk.order.forEach(function(k){ sumH += bk.buckets[k].heures; sumNet += bk.buckets[k].netBase; });
+      var tauxMoyenContrat = sumH > 0 ? sumNet / sumH : Math.max.apply(null, e.tauxJour);
+
+      var empMonths = {};
+      var eHeures=0, eNet=0, eCharges=0, eCout=0;
+
+      bk.order.forEach(function(key){
+        var b = bk.buckets[key];
+        var ov = e.ajustHeures[key];
+        var heures = (ov !== undefined && ov !== null) ? ov : b.heures;
+        var tauxMoyenMois = b.heures > 0 ? b.netBase / b.heures : tauxMoyenContrat;
+        var netBase = (ov !== undefined && ov !== null) ? heures * tauxMoyenMois : b.netBase;
+
+        var net = netBase * (cpInclus ? 1 : 1.1);
+        var ch = chargesFromNet(net, heures, tauxSalarial);
+        var charges = ch.cotisSalariales + ch.patronalDu;
+
+        eHeures += heures; eNet += net; eCharges += charges; eCout += ch.coutTotal;
+
+        // Salaire : mois travaillé
+        var mS = touch(empMonths, key); mS.heures += heures; mS.net += net; mS.cout += net;
+        var cS = touch(consolidated, key); cS.heures += heures; cS.net += net; cS.cout += net;
+        var yS = key.slice(0,4); yearTotals[yS] = (yearTotals[yS]||0) + net;
+        touchProv(key).sortie += net;
+
+        // Charges : décalées
+        var keyCh = shiftMonthKey(key, decalage);
+        var mC = touch(empMonths, keyCh); mC.charges += charges; mC.cout += charges;
+        var cC = touch(consolidated, keyCh); cC.charges += charges; cC.cout += charges;
+        var yC = keyCh.slice(0,4); yearTotals[yC] = (yearTotals[yC]||0) + charges;
+        touchProv(keyCh).sortie += charges;
+      });
+
+      // Provision de ce contrat : constante, sur son propre nombre de mois
+      var nProvE = (e.nature === 'garde') ? nProvGarde : nProvEntretien;
+      var provE = eCout / nProvE;
+      if (bk.order.length) {
+        var startKey = bk.order.slice().sort()[0];
+        for (var ip=0; ip<nProvE; ip++) touchProv(shiftMonthKey(startKey, ip)).entree += provE;
+      }
+
+      empResults.push({
+        id: e.id, nom: e.nom || NATURES[e.nature].label, nature: e.nature,
+        heures: eHeures, net: eNet, charges: eCharges, cout: eCout,
+        provMensuelle: provE, nProv: nProvE,
+        mois: Object.keys(empMonths).sort().map(function(k){
+          return {label: moisLabel(k), data: empMonths[k]};
+        })
+      });
+    });
+
+    var depensesPrev = empResults.reduce(function(a,r){ return a + r.cout; }, 0);
+    var provMensuelle = empResults.reduce(function(a,r){ return a + r.provMensuelle; }, 0);
+
+    var monthOrder = Object.keys(consolidated).sort();
+    var yearOrder = Object.keys(yearTotals).sort();
+
+    // --- Tableau mensuel consolidé ---
+    var body = document.getElementById('monthsBody');
+    body.innerHTML = '';
+    var totHeures=0, totNet=0, totCharges=0, totCout=0;
+    monthOrder.forEach(function(key){
+      var m = consolidated[key];
+      totHeures += m.heures; totNet += m.net; totCharges += m.charges; totCout += m.cout;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+moisLabel(key)+'</td><td>'+m.heures.toFixed(1)+' h</td><td>'+euro(m.net)+'</td><td>'+euro(m.charges)+'</td><td>'+euro(m.cout)+'</td>';
+      body.appendChild(tr);
+    });
+    document.getElementById('thCharges').textContent = decalage > 0 ? ('Charges (M−'+decalage+')') : 'Charges';
+    document.getElementById('totHeures').textContent = totHeures.toFixed(1)+' h';
+    document.getElementById('totNet').textContent = euro(totNet);
+    document.getElementById('totCharges').textContent = euro(totCharges);
+    document.getElementById('totCout').textContent = euro(totCout);
+
+    // --- Compte de provision ---
+    var provOrder = Object.keys(provision).sort();
+    var pb = document.getElementById('provBody');
+    pb.innerHTML = '';
+    var solde = 0, totEntree = 0, totSortie = 0;
+    var soldeMin = null, moisMin = '', soldeMax = null, moisMax = '';
+    provOrder.forEach(function(key){
+      var p = provision[key];
+      solde += p.entree - p.sortie;
+      totEntree += p.entree; totSortie += p.sortie;
+      if (soldeMin === null || solde < soldeMin) { soldeMin = solde; moisMin = moisLabel(key); }
+      if (soldeMax === null || solde > soldeMax) { soldeMax = solde; moisMax = moisLabel(key); }
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+moisLabel(key)+'</td><td>'+euro(p.entree)+'</td><td>'+euro(p.sortie)+'</td>'
+        + '<td class="'+(solde < -0.005 ? 'neg' : (solde > 0.005 ? 'pos' : ''))+'">'+euro(solde)+'</td>';
+      pb.appendChild(tr);
+    });
+    document.getElementById('provTotal').textContent = euro(totEntree);
+    document.getElementById('provSorties').textContent = euro(totSortie);
+    document.getElementById('provSolde').textContent = euro(solde);
+
+    var provSum = document.getElementById('provSummary');
+    var totProvMensuelle = provMensuelle;
+    provSum.innerHTML = empResults.map(function(r){
+      return '<div class="line"><span>'+esc(r.nom)+' · '+euro(r.cout)+' ÷ '+r.nProv+' mois</span><span class="val">'+euro(r.provMensuelle)+' / mois</span></div>';
+    }).join('')
+      + '<div class="rule"></div>'
+      + '<div class="line"><span>Dépenses prévisionnelles (salaires + charges)</span><span class="val">'+euro(depensesPrev)+'</span></div>'
+      + '<div class="line bold"><span>Provision mensuelle cumulée</span><span class="val">'+euro(provMensuelle)+'</span></div>'
+      + (soldeMax !== null ? '<div class="line muted"><span>Trésorerie max. immobilisée ('+moisMax+')</span><span class="val">'+euro(soldeMax)+'</span></div>' : '')
+      + (soldeMin !== null && soldeMin < -0.005
+          ? '<div class="line" style="color:var(--rust)"><span>⚠ Solde négatif ('+moisMin+')</span><span class="val" style="color:var(--rust)">'+euro(soldeMin)+'</span></div>'
+          : '')
+      + '<div class="line muted"><span>Solde en fin de période</span><span class="val">'+euro(solde)+'</span></div>';
+    if (!empResults.length) provSum.innerHTML = '<p class="note">Ajoutez au moins un(e) employé(e).</p>';
+
+    // --- Détail mensuel par employé(e) ---
+    var emt = document.getElementById('empMonthTables');
+    emt.innerHTML = '';
+    empResults.forEach(function(r){
+      var rows = r.mois.map(function(m){
+        var d = m.data;
+        return '<tr><td>'+m.label+'</td><td>'+d.heures.toFixed(1)+' h</td><td>'+euro(d.net)+'</td><td>'+euro(d.charges)+'</td><td>'+euro(d.cout)+'</td></tr>';
+      }).join('');
+      var div = document.createElement('div');
+      div.className = 'emp-summary';
+      div.innerHTML = '<div class="emp-summary-name">'+esc(r.nom)+' · '+NATURES[r.nature].court+'</div>'
+        + '<div class="month-table-wrap" style="max-height:340px;">'
+        + '<table class="months"><colgroup><col class="col-mois"><col class="col-heures"><col class="col-net"><col class="col-charges"><col class="col-cout"></colgroup>'
+        + '<thead><tr><th>Mois</th><th>Heures</th><th>Salaire net</th><th>Charges</th><th>Décaissé</th></tr></thead>'
+        + '<tbody>'+rows+'</tbody>'
+        + '<tfoot><tr><td>Total</td><td>'+r.heures.toFixed(1)+' h</td><td>'+euro(r.net)+'</td><td>'+euro(r.charges)+'</td><td>'+euro(r.cout)+'</td></tr></tfoot>'
+        + '</table></div>';
+      emt.appendChild(div);
+    });
+    if (!empResults.length) emt.innerHTML = '<p class="note">Ajoutez au moins un(e) employé(e).</p>';
+
+    // --- Récap par employé(e) ---
+    var summ = document.getElementById('empSummaries');
+    summ.innerHTML = '';
+    empResults.forEach(function(r){
+      var div = document.createElement('div');
+      div.className = 'emp-summary';
+      div.innerHTML = '<div class="emp-summary-name">'+esc(r.nom)+' · '+NATURES[r.nature].court+' · '+r.heures.toFixed(1)+' h</div>'
+        + '<div class="line"><span>Salaire net versé</span><span class="val">'+euro(r.net)+'</span></div>'
+        + '<div class="line muted"><span>Charges (sal.+patr.)</span><span class="val">'+euro(r.charges)+'</span></div>'
+        + '<div class="line bold"><span>Coût total</span><span class="val">'+euro(r.cout)+'</span></div>'
+        + '<div class="line muted"><span>Provision mensuelle ('+r.nProv+' mois)</span><span class="val">'+euro(r.provMensuelle)+'</span></div>';
+      summ.appendChild(div);
+    });
+    if (!empResults.length) summ.innerHTML = '<p class="note">Ajoutez au moins un(e) employé(e).</p>';
+
+    // --- Crédit d'impôt ---
+    var yb = document.getElementById('yearsBlock');
+    yb.innerHTML = '';
+    var creditTotal = 0;
+    yearOrder.forEach(function(year, idx){
+      var coutAnnee = yearTotals[year];
+      var bonus = (premiereAnnee && idx===0) ? 1500 : 0;
+      var plafond = Math.min(12000 + Math.min(enfants,3)*1500 + bonus, 15000 + bonus);
+      var credit = Math.min(coutAnnee, plafond) * 0.5;
+      creditTotal += credit;
+      var div = document.createElement('div');
+      div.className = 'year-block';
+      div.innerHTML = '<div class="year-label">'+year+'</div>'
+        + '<div class="line"><span>Dépense décaissée (tou(te)s employé(e)s)</span><span class="val">'+euro(coutAnnee)+'</span></div>'
+        + '<div class="line muted"><span>Plafond applicable</span><span class="val">'+euro(plafond)+'</span></div>'
+        + '<div class="line bold"><span>Crédit d\'impôt (50 %)</span><span class="val">'+euro(credit)+'</span></div>';
+      yb.appendChild(div);
+    });
+    if (!yearOrder.length) yb.innerHTML = '<p class="note">Renseignez des périodes de contrat valides.</p>';
+
+    var coutReel = totCout - creditTotal;
+    var nbMois = monthOrder.length || 1;
+    document.getElementById('outCreditTotal').textContent = euro(creditTotal);
+    document.getElementById('outCoutBrutTotal').textContent = euro(totCout);
+    document.getElementById('outCoutReelTotal').textContent = euro(coutReel);
+    document.getElementById('outProvMensuelle').textContent = euro(totProvMensuelle);
+    document.getElementById('outCoutReelMoisMoyen').textContent = euro(coutReel/nbMois);
+    document.getElementById('outCoutHoraire').textContent = euro(totHeures>0 ? coutReel/totHeures : 0);
+  }
+
+  // ---- Init ----
+  document.querySelectorAll('#cpInclus,#enfants,#premiereAnnee,#decalageCharges,#moisProvGarde,#moisProvEntretien').forEach(function(el){
+    el.addEventListener('input', render);
+  });
+  // Ces deux-là changent les mois affichés dans les tableaux d'ajustement
+  document.getElementById('applyVacances').addEventListener('change', function(){ renderEmployees(); render(); });
+  document.getElementById('zoneScolaire').addEventListener('change', function(){ renderEmployees(); render(); });
+
+  if (!loadState()) {
+    employees = [
+      newEmployee({nom:'', nature:'garde',     heuresJour:[3,3,0,3,3,0,0], tauxJour:[14,14,14,14,14,14,14]}),
+      newEmployee({nom:'', nature:'entretien', heuresJour:[0,0,4,0,0,0,0], tauxJour:[12,12,12,12,12,12,12], dateDebut:'2026-09-01', dateFin:'2027-08-31'})
+    ];
+  }
+  renderEmployees();
+  render();
+</script>
+</body>
+</html>
